@@ -43,9 +43,3 @@ jobs:
         if: steps.check_changes.outputs.changes == 'changes'
         run: |
           git push origin ${{ steps.get_default_branch.outputs.branch }}
-          
-      - name: Trigger Create Date-Named Branch Workflow
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          event-type: create-date-branch

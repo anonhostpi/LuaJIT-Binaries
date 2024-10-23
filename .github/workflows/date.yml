@@ -2,6 +2,10 @@ name: Create Date-Named Branch
 
 on:
   workflow_dispatch: # Allows manual trigger
+  workflow_run:
+    workflows: ["Sync Fork with Upstream"]  # Name of the workflow that triggers this one
+    types:
+      - completed  # Or you can specify success, failure, etc.
 
 jobs:
   create_branch:
