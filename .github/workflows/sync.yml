@@ -20,13 +20,12 @@ jobs:
       - name: Get upstream default branch
         id: get_default_branch
         run: |
-          UPSTREAM_REPO="ORIGINAL_OWNER/REPOSITORY_NAME"
-          DEFAULT_BRANCH=$(curl -s https://api.github.com/repos/$UPSTREAM_REPO | jq -r '.default_branch')
-          echo "::set-output name=branch::$DEFAULT_BRANCH"
+          DEFAULT_BRANCH=$(curl -s https://api.github.com/repos/LuaJIT/LuaJIT | jq -r '.default_branch')
+          echo "branch=$DEFAULT_BRANCH">> "$GITHUB_OUTPUT"
 
       - name: Add upstream repository and fetch changes
         run: |
-          git remote add upstream https://github.com/ORIGINAL_OWNER/REPOSITORY_NAME.git
+          git remote add upstream https://github.com/LuaJIT/LuaJIT.git
           git fetch upstream
 
       - name: Check for changes
