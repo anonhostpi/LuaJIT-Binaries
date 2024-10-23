@@ -1,0 +1,53 @@
+name: Create Date-Named Branch
+
+on:
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  create_branch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Set up git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get today's date
+        id: date
+        run: |
+          BRANCH_NAME=$(date +%Y-%m-%d)
+          echo "branch_name=$BRANCH_NAME">> "$GITHUB_OUTPUT"
+
+      - name: Check if branch exists
+        id: branch_exists
+        run: |
+          BRANCH_NAME=${{ steps.date.outputs.branch_name }}
+          if git ls-remote --exit-code --heads origin $BRANCH_NAME; then
+            echo "Branch exists"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Branch does not exist"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create branch if it doesn't exist
+        if: steps.branch_exists.outputs.exists == 'false'
+        run: |
+          BRANCH_NAME=${{ steps.date.outputs.branch_name }}
+          git checkout -b $BRANCH_NAME
+          git push origin $BRANCH_NAME
+
+      - name: Set new default branch via GitHub API
+        run: |
+          BRANCH_NAME=${{ steps.date.outputs.branch_name }}
+          REPO_OWNER=$(echo $GITHUB_REPOSITORY | cut -d'/' -f1)
+          REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)
+          curl -X PATCH \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/$REPO_OWNER/$REPO_NAME \
+            -d "{\"default_branch\":\"$BRANCH_NAME\"}"
