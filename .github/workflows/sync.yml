@@ -1,0 +1,46 @@
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Runs daily at midnight
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Set up git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get upstream default branch
+        id: get_default_branch
+        run: |
+          UPSTREAM_REPO="ORIGINAL_OWNER/REPOSITORY_NAME"
+          DEFAULT_BRANCH=$(curl -s https://api.github.com/repos/$UPSTREAM_REPO | jq -r '.default_branch')
+          echo "::set-output name=branch::$DEFAULT_BRANCH"
+
+      - name: Add upstream repository and fetch changes
+        run: |
+          git remote add upstream https://github.com/ORIGINAL_OWNER/REPOSITORY_NAME.git
+          git fetch upstream
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git fetch upstream
+          git diff --quiet HEAD upstream/${{ steps.get_default_branch.outputs.branch }} && echo "changes=changes">> "$GITHUB_OUTPUT"
+
+      - name: Merge upstream changes (only if changes are detected)
+        if: steps.check_changes.outputs.changes == 'changes'
+        run: |
+          git merge upstream/${{ steps.get_default_branch.outputs.branch }} --allow-unrelated-histories
+
+      - name: Push changes to fork (only if changes are detected)
+        if: steps.check_changes.outputs.changes == 'changes'
+        run: |
+          git push origin ${{ steps.get_default_branch.outputs.branch }}
