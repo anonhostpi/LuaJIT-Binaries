@@ -32,7 +32,7 @@ jobs:
         id: check_changes
         run: |
           git fetch upstream
-          git diff --quiet HEAD upstream/${{ steps.get_default_branch.outputs.branch }} -- . ":(exclude)src" || echo "changes=changes" >> "$GITHUB_OUTPUT"
+          git diff --quiet HEAD upstream/${{ steps.get_default_branch.outputs.branch }} -- . ":(exclude).github" || echo "changes=changes" >> "$GITHUB_OUTPUT"
 
       - name: Merge upstream changes (only if changes are detected)
         if: steps.check_changes.outputs.changes == 'changes'
